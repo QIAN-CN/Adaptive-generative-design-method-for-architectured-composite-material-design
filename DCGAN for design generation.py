@@ -43,7 +43,7 @@ def get_generator(noise_img, output_dim, is_train=True, alpha=0.1):
         layer3 = tf.nn.dropout(layer3, keep_prob=0.9)
 
         # 7 x 7 256 to 14 x 14 x 128
-        layer4 = tf.layers.conv2d_transpose(layer3, 8, 4, strides=2, padding='same')#,activation=tf.nn.relu)         #(N,16,16,16)--> (N,32,32,8)
+        layer4 = tf.layers.conv2d_transpose(layer3, 8, 4, strides=2, padding='same')         #(N,16,16,16)--> (N,32,32,8)
         layer4 = tf.layers.batch_normalization(layer4, training=is_train)
         layer4 = tf.maximum(alpha * layer4, layer4)
         layer4 = tf.nn.dropout(layer4, keep_prob=0.9)
