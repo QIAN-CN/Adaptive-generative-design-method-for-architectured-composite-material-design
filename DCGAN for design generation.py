@@ -19,7 +19,6 @@ def get_inputs(noise_dim, image_height, image_width, image_depth):
 
 def get_generator(noise_img, output_dim, is_train=True, alpha=0.1):
     with tf.variable_scope("generator", reuse=(not is_train)):
-        # 100 x 1 to 4 x 4 x 512
 
         layer1 = tf.layers.dense(noise_img, 4*4*16)          #(N,16)-->(N,4*4*16)
         layer1 = tf.reshape(layer1, [-1, 4, 4, 16])          #(N,4*4*16)-->(N,4,4,16)
@@ -30,19 +29,16 @@ def get_generator(noise_img, output_dim, is_train=True, alpha=0.1):
         # dropout
         layer1 = tf.nn.dropout(layer1, keep_prob=0.9)                  
         
-        # 4 x 4 x 512 to 7 x 7 x 256
         layer2 = tf.layers.conv2d_transpose(layer1, 16, 5, strides=2, padding='same')     #(N,4,4,16)--> (N,8,8,32)
         layer2 = tf.layers.batch_normalization(layer2, training=is_train)
         layer2 = tf.maximum(alpha * layer2, layer2)
         layer2 = tf.nn.dropout(layer2, keep_prob=0.9)
         
-        # 7 x 7 256 to 14 x 14 x 128
         layer3 = tf.layers.conv2d_transpose(layer2, 16, 4, strides=2, padding='same')         #(N,8,8,32)--> (N,16,16,16)
         layer3 = tf.layers.batch_normalization(layer3, training=is_train)
         layer3 = tf.maximum(alpha * layer3, layer3)
         layer3 = tf.nn.dropout(layer3, keep_prob=0.9)
 
-        # 7 x 7 256 to 14 x 14 x 128
         layer4 = tf.layers.conv2d_transpose(layer3, 8, 4, strides=2, padding='same')         #(N,16,16,16)--> (N,32,32,8)
         layer4 = tf.layers.batch_normalization(layer4, training=is_train)
         layer4 = tf.maximum(alpha * layer4, layer4)
@@ -63,31 +59,26 @@ def get_generator(noise_img, output_dim, is_train=True, alpha=0.1):
     
 def get_discriminator(inputs_img, reuse=False, alpha=0.1):
     with tf.variable_scope("discriminator", reuse=reuse):
-        # 28 x 28 x 1 to 14 x 14 x 128
         layer1 = tf.layers.conv2d(inputs_img, 4, 4, strides=2, padding='same') #(N,32,32,1)--> (N,16,16,4)
         layer1 = tf.layers.batch_normalization(layer1, training=True)
         layer1 = tf.maximum(alpha * layer1, layer1)
         layer1 = tf.nn.dropout(layer1, keep_prob=0.9)
-        
-        # 14 x 14 x 128 to 7 x 7 x 256
+
         layer2 = tf.layers.conv2d(layer1,8, 4, strides=2, padding='same')   #(N,16,16,4)--> (N,8,8,8)
         layer2 = tf.layers.batch_normalization(layer2, training=True)
         layer2 = tf.maximum(alpha * layer2, layer2)
         layer2 = tf.nn.dropout(layer2, keep_prob=0.9)
         
-        # 7 x 7 x 256 to 4 x 4 x 512
         layer3 = tf.layers.conv2d(layer2, 16, 3, strides=2, padding='same')   #(N,8,8,8)--> (N,4,4,16)
         layer3 = tf.layers.batch_normalization(layer3, training=True)
         layer3 = tf.maximum(alpha * layer3, layer3)
         layer3 = tf.nn.dropout(layer3, keep_prob=0.9)
 
-        # 7 x 7 x 256 to 4 x 4 x 512
         layer4 = tf.layers.conv2d(layer3, 32, 3, strides=2, padding='same')   #(N,4,4,16)--> (N,2,2,32)
         layer4 = tf.layers.batch_normalization(layer4, training=True)
         layer4 = tf.maximum(alpha * layer4, layer4)
         layer4 = tf.nn.dropout(layer4, keep_prob=0.9)
         
-        # 4 x 4 x 512 to 4*4*512 x 1
         flatten = tf.reshape(layer4, (-1, 2*2*32))
 
         logits = tf.layers.dense(flatten, 1,activation=None)
@@ -209,7 +200,7 @@ def train(noise_size, data_shape, batch_size, n_samples):
                 _ = sess.run(d_train_opt, feed_dict={inputs_real: batch_images,
                                                      inputs_noise: batch_noise})
                 
-                if steps % 100 == 0: #and e>=epochs/2:
+                if steps % 100 == 0:
                     train_loss_d = d_loss.eval({inputs_real: batch_images,
                                                 inputs_noise: batch_noise})     
                     train_loss_g = g_loss.eval({inputs_real: batch_images,
